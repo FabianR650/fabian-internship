@@ -5,7 +5,7 @@ import axios from "axios";
 import Skeleton from "../skeleton/Skeleton";
 
 const TopSellers = () => {
-  const [sellers, setSellers] = useState([]);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,7 +14,7 @@ const TopSellers = () => {
         const response = await axios.get(
           "https://us-central1-nft-cloud-functions.cloudfunctions.net/topSellers"
         );
-        setSellers(response.data);
+        setItems(response.data);
       } catch (error) {
         console.error("Error fetching top sellers:", error);
       } finally {
@@ -50,23 +50,23 @@ const TopSellers = () => {
                       </div>
                     </li>
                   ))
-                : sellers.map((seller, index) => (
-                    <li key={index}>
+                : items.map((item) => (
+                    <li key={item.id}>
                       <div className="author_list_pp">
-                        <Link to={`/author/${seller.id}`}>
+                        <Link to={`/author/${item.authorId}`}>
                           <img
                             className="lazy pp-author"
-                            src={seller.authorImage}
-                            alt={seller.authorName}
+                            src={item.authorImage}
+                            alt={item.authorName}
                           />
                           <i className="fa fa-check"></i>
                         </Link>
                       </div>
                       <div className="author_list_info">
-                        <Link to={`/author/${seller.id}`}>
-                          {seller.authorName}
+                        <Link to={`/author/${item.authorId}`}>
+                          {item.authorName}
                         </Link>
-                        <span>{seller.price} ETH</span>
+                        <span>{item.price} ETH</span>
                       </div>
                     </li>
                   ))}
