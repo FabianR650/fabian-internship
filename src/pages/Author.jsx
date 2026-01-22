@@ -1,57 +1,50 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useLocation, Link } from "react-router-dom";
-import axios from "axios";
-
 import AuthorBanner from "../images/author_banner.jpg";
-import AuthorImage from "../images/author_thumbnail.jpg";
-import Skeleton from "../components/skeleton/Skeleton";
+import axios from "axios";
+import { useParams, Link } from "react-router-dom";
 import AuthorItems from "../components/author/AuthorItems";
+import Skeleton from "../components/skeleton/Skeleton";
 
 const Author = () => {
   const { authorId } = useParams();
-  const location = useLocation();
 
-  // Data passed from NewItems
-  const {
-    authorName = "Unknown Author",
-    authorImage = AuthorImage,
-    authorUsername = "@unknown",
-    authorWallet = "No wallet provided",
-    followers: initialFollowers = 0,
-  } = location.state || {};
-
-  // Local state
-  const [followers, setFollowers] = useState(initialFollowers);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [author, setAuthor] = useState(null);
+  const [authorItems, setAuthorItems] = useState([]);
   const [loadingAuthor, setLoadingAuthor] = useState(true);
   const [loadingItems, setLoadingItems] = useState(true);
-  const [authorItems, setAuthorItems] = useState([]);
+  const [isFollowing, setIsFollowing] = useState(false);
 
-  // FOLLOW / UNFOLLOW
-  const toggleFollow = () => {
-    setIsFollowing((prev) => !prev);
-    setFollowers((prev) => (isFollowing ? prev - 1 : prev + 1));
-  };
-
-  // FETCH AUTHOR ITEMS
   useEffect(() => {
-    async function fetchAuthorItems() {
+    if (!authorId) return;
+
+    async function fetchAuthorData() {
       try {
         const response = await axios.get(
-          `https://us-central1-nft-cloud-functions.cloudfunctions.net/author?author=${authorId}`
+          `https://us-central1-nft-cloud-functions.cloudfunctions.net/authors?author=${authorId}`
         );
 
-        setAuthorItems(response.data);
+        if (response.data && Object.keys(response.data).length > 0) {
+          setAuthor(response.data);
+          setAuthorItems(response.data.nftCollection || []);
+        }
       } catch (error) {
-        console.error("Error fetching author items:", error);
+        console.error("Error fetching author data:", error);
       } finally {
-        setLoadingItems(false);
         setLoadingAuthor(false);
+        setLoadingItems(false);
       }
     }
 
-    fetchAuthorItems();
+    fetchAuthorData();
   }, [authorId]);
+
+  const toggleFollow = () => {
+    setIsFollowing((prev) => !prev);
+    setAuthor((prev) => ({
+      ...prev,
+      followers: prev.followers + (isFollowing ? -1 : 1),
+    }));
+  };
 
   return (
     <div id="wrapper">
@@ -64,7 +57,13 @@ const Author = () => {
           aria-label="section"
           className="text-light"
           style={{ background: `url(${AuthorBanner}) top` }}
-        ></section>
+        >
+          {loadingAuthor && (
+            <div style={{ padding: "120px 0" }}>
+              <Skeleton height={200} />
+            </div>
+          )}
+        </section>
 
         <section aria-label="section">
           <div className="container">
@@ -77,25 +76,36 @@ const Author = () => {
                   <div className="de-flex-col">
                     <div className="profile_avatar">
 
-                      {/* IMAGE + SKELETON */}
+                      {/* Avatar */}
                       {loadingAuthor ? (
-                        <Skeleton width="120px" height="120px" borderRadius="50%" />
+                        <Skeleton circle width={120} height={120} />
                       ) : (
-                        <img src={authorImage} alt={authorName} />
+                        <>
+                          <img
+                            src={author.authorImage}
+                            alt={author.authorName}
+                          />
+                          <i className="fa fa-check"></i>
+                        </>
                       )}
 
-                      {!loadingAuthor && <i className="fa fa-check"></i>}
-
+                      {/* Name + Username + Wallet */}
                       <div className="profile_name">
                         <h4>
                           {loadingAuthor ? (
-                            <Skeleton width="200px" height="25px" />
+                            <>
+                              <Skeleton width={200} height={24} />
+                              <Skeleton width={150} height={20} />
+                              <Skeleton width={250} height={20} />
+                            </>
                           ) : (
                             <>
-                              {authorName}
-                              <span className="profile_username">{authorUsername}</span>
+                              {author.authorName}
+                              <span className="profile_username">
+                                @{author.tag}
+                              </span>
                               <span id="wallet" className="profile_wallet">
-                                {authorWallet}
+                                {author.address}
                               </span>
                               <button id="btn_copy" title="Copy Text">
                                 Copy
@@ -110,15 +120,20 @@ const Author = () => {
                   {/* FOLLOW BUTTON */}
                   <div className="profile_follow de-flex">
                     <div className="de-flex-col">
+
+                      {/* Followers */}
                       {loadingAuthor ? (
-                        <Skeleton width="100px" height="20px" />
+                        <Skeleton width={120} height={20} />
                       ) : (
                         <div className="profile_follower">
-                          {followers} followers
+                          {author.followers} followers
                         </div>
                       )}
 
-                      {!loadingAuthor && (
+                      {/* Follow Button */}
+                      {loadingAuthor ? (
+                        <Skeleton width={100} height={40} />
+                      ) : (
                         <button
                           className={`btn-main ${isFollowing ? "btn-following" : ""}`}
                           onClick={toggleFollow}
@@ -130,6 +145,7 @@ const Author = () => {
                           {isFollowing ? "Following" : "Follow"}
                         </button>
                       )}
+
                     </div>
                   </div>
 
@@ -139,19 +155,11 @@ const Author = () => {
               {/* AUTHOR ITEMS */}
               <div className="col-md-12 mt-4">
                 <div className="de_tab tab_simple">
-                  {loadingItems ? (
-                    <div className="row">
-                      {new Array(6).fill(0).map((_, i) => (
-                        <div className="col-lg-4 col-md-6 mb-4" key={i}>
-                          <Skeleton width="100%" height="250px" />
-                          <Skeleton width="60%" height="20px" className="mt-2" />
-                          <Skeleton width="40%" height="15px" />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <AuthorItems items={authorItems} />
-                  )}
+                  <AuthorItems
+                    items={authorItems}
+                    author={author}
+                    loadingItems={loadingItems}
+                  />
                 </div>
               </div>
 
@@ -171,6 +179,21 @@ const Author = () => {
                           />
                         </Link>
                         <h5 className="mt-2">{item.title}</h5>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Skeleton for More From This Creator */}
+              {loadingItems && (
+                <div className="col-md-12 mt-5">
+                  <Skeleton width={250} height={30} />
+                  <div className="row mt-3">
+                    {[1, 2, 3].map((i) => (
+                      <div className="col-lg-4 col-md-6 mb-4" key={i}>
+                        <Skeleton height={200} />
+                        <Skeleton width={150} height={20} className="mt-2" />
                       </div>
                     ))}
                   </div>
