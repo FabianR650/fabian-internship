@@ -11,6 +11,8 @@ import "slick-carousel/slick/slick-theme.css";
 function HotCollections() {
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [slidesToShow, setSlidesToShow] = useState(4);
+  const [showArrows, setShowArrows] = useState(true);
 
   const handleImageLoad = (index) => {
     setCollections((prev) => {
@@ -20,8 +22,7 @@ function HotCollections() {
     });
   };
 
-  const [slidesToShow, setSlidesToShow] = useState(4);
-const [showArrows, setShowArrows] = useState(true);
+
 
 useEffect(() => {
   const updateLayout = () => {
@@ -126,18 +127,20 @@ useEffect(() => {
 
                       {/* AUTHOR IMAGE + SKELETON */}
                       <div className="nft_coll_pp">
-                        {!item.loaded ? (
-                          <Skeleton width="50px" height="50px" borderRadius="50%" />
-                        ) : (
-                          <Link to="/author">
-                            <img
-                              className="lazy pp-coll"
-                              src={item.authorImage || AuthorImage}
-                              alt={item.authorId}
-                            />
-                          </Link>
-                        )}
-                        {item.loaded && <i className="fa fa-check"></i>}
+                        <Link to={`/author/${item.authorId}`}>
+                          {!item.loaded ? (
+                            <Skeleton width="50px" height="50px" borderRadius="50%" />
+                          ) : (
+                            <>
+                              <img
+                                className="lazy pp-coll"
+                                src={item.authorImage || AuthorImage}
+                                alt={item.authorId}
+                              />
+                              <i className="fa fa-check"></i>
+                            </>
+                          )}
+                        </Link>
                       </div>
 
                       {/* TITLE + CODE + SKELETON */}
