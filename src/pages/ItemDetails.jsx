@@ -1,42 +1,82 @@
 import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import axios from "axios";
 import Skeleton from "../components/skeleton/Skeleton";
 import AuthorImage from "../images/author_thumbnail.jpg";
 import nftImage from "../images/nftImage.jpg";
 
 const ItemDetails = () => {
+  const { nftId } = useParams();
+
+  const [item, setItem] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [detailsLoaded, setDetailsLoaded] = useState(false);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  const { state } = useLocation();
-  const item = state?.item;
+  useEffect(() => {
+    async function fetchItem() {
+      try {
+        const res = await axios.get(
+          `https://us-central1-nft-cloud-functions.cloudfunctions.net/itemDetails?nftId=${nftId}`
+        );
+        setItem(res.data);
+      } catch (err) {
+        console.error("Error fetching item details:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [detailsLoaded, setDetailsLoaded] = useState(false);
+    fetchItem();
+  }, [nftId]);
 
-  // Simulate details loading (you can remove this if details load instantly)
   useEffect(() => {
     if (item) {
       setTimeout(() => setDetailsLoaded(true), 300);
     }
   }, [item]);
 
-  if (!item) {
+  if (loading) {
     return (
       <div className="container mt-5">
-        <h3>No item data found</h3>
-        <p>Try navigating from Hot Collections again.</p>
+        <Skeleton width="100%" height="400px" />
       </div>
     );
   }
 
+  if (!item) {
+    return (
+      <div className="container mt-5">
+        <h3>No item data found</h3>
+        <p>Try navigating from Hot Collections or Explore again.</p>
+      </div>
+    );
+  }
+
+  // Extract fields
   const imageSrc = item.nftImage || nftImage;
-  const title = item.title;
-  const authorImg = item.authorImage || AuthorImage;
-  const authorId = item.authorId;
-  const nftId = item.nftId;
-  const code = item.code;
+  const title = item.title || "Untitled NFT";
+  const tag = item.tag ? `#${item.tag}` : "";
+  const fullTitle = `${title} ${tag}`.trim();
+
+  const description = item.description || "No description available.";
+  const views = item.views ?? 0;
+  const likes = item.likes ?? 0;
+  const price = item.price ?? "N/A";
+
+  // Owner
+  const ownerId = item.ownerId || "Unknown Owner";
+  const ownerName = item.ownerName || ownerId;
+  const ownerImg = item.ownerImage || AuthorImage;
+
+  // Creator
+  const creatorId = item.creatorId || "Unknown Creator";
+  const creatorName = item.creatorName || creatorId;
+  const creatorImg = item.creatorImage || AuthorImage;
 
   return (
     <div id="wrapper">
@@ -45,15 +85,13 @@ const ItemDetails = () => {
           <div className="container">
             <div className="row">
 
-              {/* LEFT SIDE — NFT IMAGE */}
+              {/* LEFT — NFT IMAGE */}
               <div className="col-md-6 text-center">
-                {!imageLoaded && (
-                  <Skeleton width="100%" height="400px" />
-                )}
+                {!imageLoaded && <Skeleton width="100%" height="400px" />}
 
                 <img
                   src={imageSrc}
-                  alt={title}
+                  alt={fullTitle}
                   onLoad={() => setImageLoaded(true)}
                   style={{
                     display: imageLoaded ? "block" : "none",
@@ -63,31 +101,35 @@ const ItemDetails = () => {
                 />
               </div>
 
-              {/* RIGHT SIDE — DETAILS */}
+              {/* RIGHT — DETAILS */}
               <div className="col-md-6">
                 <div className="item_info">
 
-                  {/* TITLE */}
+                  {/* TITLE + TAG */}
                   {!detailsLoaded ? (
                     <Skeleton width="60%" height="35px" />
                   ) : (
-                    <h2>{title}</h2>
+                    <h2>{fullTitle}</h2>
                   )}
 
-                  {/* NFT ID */}
+                  {/* VIEWS + LIKES */}
                   {!detailsLoaded ? (
-                    <Skeleton width="40%" height="20px" />
+                    <Skeleton width="50%" height="20px" />
                   ) : (
-                    <p><strong>NFT ID:</strong> {nftId}</p>
+                    <p>
+                      <strong>Views:</strong> {views} &nbsp; | &nbsp;
+                      <strong>Likes:</strong> {likes}
+                    </p>
                   )}
 
-                  {/* CODE */}
+                  {/* DESCRIPTION */}
                   {!detailsLoaded ? (
-                    <Skeleton width="30%" height="20px" />
+                    <Skeleton width="100%" height="80px" />
                   ) : (
-                    <p><strong>Code:</strong> {code}</p>
+                    <p>{description}</p>
                   )}
 
+                  
                   {/* OWNER */}
                   <h6>Owner</h6>
                   <div className="item_author">
@@ -95,7 +137,7 @@ const ItemDetails = () => {
                       {!detailsLoaded ? (
                         <Skeleton width="50px" height="50px" borderRadius="50%" />
                       ) : (
-                        <img src={authorImg} alt={authorId} />
+                        <img src={ownerImg} alt={ownerName} />
                       )}
                     </div>
 
@@ -103,7 +145,7 @@ const ItemDetails = () => {
                       {!detailsLoaded ? (
                         <Skeleton width="120px" height="20px" />
                       ) : (
-                        <Link to="/author">{authorId}</Link>
+                        <Link to={`/author/${ownerId}`}>{ownerName}</Link>
                       )}
                     </div>
                   </div>
@@ -117,7 +159,7 @@ const ItemDetails = () => {
                       {!detailsLoaded ? (
                         <Skeleton width="50px" height="50px" borderRadius="50%" />
                       ) : (
-                        <img src={authorImg} alt={authorId} />
+                        <img src={creatorImg} alt={creatorName} />
                       )}
                     </div>
 
@@ -125,7 +167,7 @@ const ItemDetails = () => {
                       {!detailsLoaded ? (
                         <Skeleton width="120px" height="20px" />
                       ) : (
-                        <Link to="/author">{authorId}</Link>
+                        <Link to={`/author/${creatorId}`}>{creatorName}</Link>
                       )}
                     </div>
                   </div>
@@ -138,7 +180,7 @@ const ItemDetails = () => {
                     <Skeleton width="80px" height="25px" />
                   ) : (
                     <div className="nft-item-price">
-                      <span>{item.price || "N/A"}</span>
+                      <span>{price} ETH</span>
                     </div>
                   )}
 
