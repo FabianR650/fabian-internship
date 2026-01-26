@@ -4,8 +4,10 @@ import axios from "axios";
 import Skeleton from "../components/skeleton/Skeleton";
 import AuthorImage from "../images/author_thumbnail.jpg";
 import nftImage from "../images/nftImage.jpg";
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 
-const ItemDetails = () => {
+const ItemDetails = ({ data }) => {
   const { nftId } = useParams();
 
   const [item, setItem] = useState(null);
@@ -13,11 +15,14 @@ const ItemDetails = () => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [detailsLoaded, setDetailsLoaded] = useState(false);
 
+
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
   useEffect(() => {
+     AOS.refresh();
     async function fetchItem() {
       try {
         const res = await axios.get(
@@ -32,7 +37,7 @@ const ItemDetails = () => {
     }
 
     fetchItem();
-  }, [nftId]);
+  }, [nftId, data]);
 
   useEffect(() => {
     if (item) {
@@ -86,7 +91,7 @@ const ItemDetails = () => {
             <div className="row">
 
               {/* LEFT — NFT IMAGE */}
-              <div className="col-md-6 text-center">
+              <div className="col-md-6 text-center" data-aos="zoom-in" data-aos-duration="1200">
                 {!imageLoaded && <Skeleton width="100%" height="400px" />}
 
                 <img
@@ -102,7 +107,7 @@ const ItemDetails = () => {
               </div>
 
               {/* RIGHT — DETAILS */}
-              <div className="col-md-6">
+              <div className="col-md-6" data-aos="fade-left" data-aos-delay="300" data-aos-duration="1000">
                 <div className="item_info">
 
                   {/* TITLE + TAG */}
@@ -116,9 +121,9 @@ const ItemDetails = () => {
                   {!detailsLoaded ? (
                     <Skeleton width="50%" height="20px" />
                   ) : (
-                    <p>
+                    <p className="item_views_likes">
                       <strong>Views:</strong> {views} &nbsp; | &nbsp;
-                      <strong>Likes:</strong> {likes}
+                      <i className="fa fa-heart"></i> <strong>Likes:</strong> {likes} 
                     </p>
                   )}
 

@@ -8,7 +8,7 @@ import AuthorImage from "../../images/author_thumbnail.jpg";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
-function HotCollections() {
+function HotCollections({ items }) {
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [slidesToShow, setSlidesToShow] = useState(4);
@@ -22,63 +22,60 @@ function HotCollections() {
     });
   };
 
+  useEffect(() => {
+    const updateLayout = () => {
+      const width = window.innerWidth;
 
+      if (width < 576) {
+        setSlidesToShow(1);
+        setShowArrows(false);
+      } else if (width < 768) {
+        setSlidesToShow(2);
+        setShowArrows(false);
+      } else if (width < 992) {
+        setSlidesToShow(2);
+        setShowArrows(true);
+      } else if (width < 1200) {
+        setSlidesToShow(3);
+        setShowArrows(true);
+      } else {
+        setSlidesToShow(4);
+        setShowArrows(true);
+      }
+    };
 
-useEffect(() => {
-  const updateLayout = () => {
-    const width = window.innerWidth;
-
-    if (width < 576) {
-      setSlidesToShow(1);
-      setShowArrows(false);
-    } else if (width < 768) {
-      setSlidesToShow(2);
-      setShowArrows(false);
-    } else if (width < 992) {
-      setSlidesToShow(2);
-      setShowArrows(true);
-    } else if (width < 1200) {
-      setSlidesToShow(3);
-      setShowArrows(true);
-    } else {
-      setSlidesToShow(4);
-      setShowArrows(true);
-    }
-  };
-
-  updateLayout(); // run on mount
-  window.addEventListener("resize", updateLayout);
-
-  return () => window.removeEventListener("resize", updateLayout);
-}, []);
+    updateLayout();
+    window.addEventListener("resize", updateLayout);
+    return () => window.removeEventListener("resize", updateLayout);
+  }, []);
 
   const settings = {
-  infinite: true,
-  slidesToShow,
-  slidesToScroll: 1,
-  speed: 100,
-  arrows: showArrows,
-  nextArrow: <NextArrow />,
-  prevArrow: <PrevArrow />,
-  swipe: true,
-  swipeToSlide: true,
-};
-  
+    infinite: true,
+    slidesToShow,
+    slidesToScroll: 1,
+    speed: 100,
+    arrows: showArrows,
+    nextArrow: <NextArrow />,
+    prevArrow: <PrevArrow />,
+    swipe: true,
+    swipeToSlide: true,
+  };
+
   useEffect(() => {
     async function fetchCollections() {
       try {
-        const response = await axios.get(
+        const res = await axios.get(
           "https://us-central1-nft-cloud-functions.cloudfunctions.net/hotCollections"
         );
 
         setCollections(
-          response.data.map((item) => ({
+          res.data.map((item) => ({
             ...item,
             loaded: false,
           }))
         );
-      } catch (error) {
-        console.error("Error fetching hot collections:", error);
+      } catch (err) {
+        console.error("Error fetching hot collections:", err);
       } finally {
         setLoading(false);
       }
@@ -91,6 +88,7 @@ useEffect(() => {
     <section id="section-collections" className="no-bottom">
       <div className="container">
         <div className="row">
+
           <div className="col-lg-12 text-center">
             <h2>Hot Collections</h2>
             <div className="small-border bg-color-2"></div>
@@ -102,12 +100,17 @@ useEffect(() => {
             <div className="slider-wrapper">
               <Slider {...settings}>
                 {collections.map((item, index) => (
-                  <div key={index}>
+                  <div
+                    key={index}
+                    data-aos="fade-up"
+                    data-aos-delay={index * 100}
+                    data-aos-duration="800"
+                  >
                     <div className="nft_coll">
 
-                      {/* NFT IMAGE + SKELETON */}
+                      {/* NFT IMAGE */}
                       <div className="nft_wrap">
-                        <Link to={`/item-details/${item.nftId}`} state={{ item }}>
+                        <Link to={`/item-details/${item.nftId}`}>
                           {!item.loaded && (
                             <Skeleton width="100%" height="200px" />
                           )}
@@ -125,7 +128,7 @@ useEffect(() => {
                         </Link>
                       </div>
 
-                      {/* AUTHOR IMAGE + SKELETON */}
+                      {/* AUTHOR IMAGE */}
                       <div className="nft_coll_pp">
                         <Link to={`/author/${item.authorId}`}>
                           {!item.loaded ? (
@@ -143,7 +146,7 @@ useEffect(() => {
                         </Link>
                       </div>
 
-                      {/* TITLE + CODE + SKELETON */}
+                      {/* TITLE + CODE */}
                       <div className="nft_coll_info">
                         {!item.loaded ? (
                           <>
@@ -152,7 +155,7 @@ useEffect(() => {
                           </>
                         ) : (
                           <>
-                            <Link to={`/item-details/${item.nftId}`} state={{ item }}>
+                            <Link to={`/item-details/${item.nftId}`}>
                               <h4>{item.title}</h4>
                             </Link>
                             <span>{item.code || "ERC-721"}</span>
@@ -166,6 +169,7 @@ useEffect(() => {
               </Slider>
             </div>
           )}
+
         </div>
       </div>
     </section>
