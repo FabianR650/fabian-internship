@@ -1,29 +1,29 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 
 const CountdownTimer = ({ expiryDate }) => {
-  const calculateTimeLeft = () => {
-    const difference = new Date(expiryDate) - new Date();
+ const calculateTimeLeft = useCallback(() => {
+  const difference = new Date(expiryDate) - new Date();
 
-    if (difference <= 0) {
-      return { hours: 0, minutes: 0, seconds: 0 };
-    }
+  if (difference <= 0) {
+    return { hours: 0, minutes: 0, seconds: 0 };
+  }
 
-    return {
-      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-      minutes: Math.floor((difference / (1000 * 60)) % 60),
-      seconds: Math.floor((difference / 1000) % 60),
-    };
+  return {
+    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((difference / (1000 * 60)) % 60),
+    seconds: Math.floor((difference / 1000) % 60),
   };
+}, [expiryDate]);
 
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
+  const timer = setInterval(() => {
+    setTimeLeft(calculateTimeLeft());
+  }, 1000);
 
-    return () => clearInterval(timer);
-  }, [expiryDate]);
+  return () => clearInterval(timer);
+}, [calculateTimeLeft]);
 
   return (
     <div className="countdown">
