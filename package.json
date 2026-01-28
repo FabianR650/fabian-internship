@@ -30,6 +30,9 @@
       "react-app/jest"
     ]
   },
+  "devDependencies": {
+  "cross-env": "^7.0.3"
+  },
   "browserslist": {
     "production": [
       ">0.2%",
